@@ -3,44 +3,7 @@ import 'package:microproyecto/PantallaPrincipal.dart';
 import 'package:microproyecto/Carta.dart';
 
 class Memoria extends StatefulWidget {
-  final List<int> cartas = [
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-  ];
+  final List<int> cartas = List<int>.generate(36, (i) => (i % 18) + 1);
   Memoria({super.key});
   @override
   State<Memoria> createState() => _MemoriaState();
@@ -48,12 +11,18 @@ class Memoria extends StatefulWidget {
 
 class _MemoriaState extends State<Memoria> {
   late List<int> cartas;
+  late List<bool> visible;
+  late List<bool> matched;
+  List<int> seleccionados = [];
+  int score = 0;
 
   @override
   void initState() {
     super.initState();
     cartas = List<int>.from(widget.cartas);
     cartas.shuffle();
+    visible = List<bool>.filled(cartas.length, false);
+    matched = List<bool>.filled(cartas.length, false);
   }
 
   @override
@@ -76,7 +45,13 @@ class _MemoriaState extends State<Memoria> {
                 itemBuilder: (context, index) {
                   final id = cartas[index];
                   final imagen = 'imgs/icon$id.png';
-                  return Carta(id: id, img: imagen);
+                  final isVisible = visible[index] || matched[index];
+                  return Carta(
+                    id: id,
+                    img: imagen,
+                    visible: isVisible,
+                    presionar: () => _cartaPresionada(index),
+                  );
                 },
               ),
             ),
@@ -101,7 +76,7 @@ class _MemoriaState extends State<Memoria> {
                     height: 100,
                     width: 200,
                     child: Text(
-                      '0',
+                      '$score',
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
@@ -165,5 +140,36 @@ class _MemoriaState extends State<Memoria> {
         ),
       ),
     );
+  }
+
+  void _cartaPresionada(int index) {
+    if (matched[index]) return;
+    if (visible[index]) return;
+
+    setState(() {
+      visible[index] = true;
+      seleccionados.add(index);
+    });
+
+    if (seleccionados.length == 2) {
+      final num1 = seleccionados[0];
+      final num2 = seleccionados[1];
+      if (cartas[num1] == cartas[num2]) {
+        setState(() {
+          matched[num1] = true;
+          matched[num2] = true;
+          seleccionados.clear();
+        });
+      } else {
+        // Aquí ocurre un error si intentas agarrar una tercera o cuarta carta antes de que se acabe el temporizador, que hace que se quede marcada. Hay que impedir que el jugador toque una tercera carta mientras se acaba el temporizador (que es más intuitivo, pero no sé si más difícil de implementar) o hacer que cuando intente tocar una tercera carta las dos anteriores desaparezcan si no son iguales
+        Future.delayed(Duration(milliseconds: 500), () {
+          setState(() {
+            visible[num1] = false;
+            visible[num2] = false;
+            seleccionados.clear();
+          });
+        });
+      }
+    }
   }
 }
