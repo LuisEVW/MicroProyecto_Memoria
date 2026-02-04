@@ -2,10 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // NECESARIO PARA EL RECORD
 import 'package:microproyecto/PantallaPrincipal.dart';
+import 'package:microproyecto/Puntuaciones.dart';
 import 'package:microproyecto/Carta.dart';
 
 class Memoria extends StatefulWidget {
-  // Generamos los pares: 18 parejas (del 1 al 18)
+  // Generar pares de cartas
   final List<int> cartas = List<int>.generate(36, (i) => (i % 18) + 1);
   Memoria({super.key});
 
@@ -22,7 +23,7 @@ class _MemoriaState extends State<Memoria> {
   int score = 0;       // Intentos realizados
   int bestScore = 0;   // Mejor puntuación guardada
   
-  // VARIABLES NUEVAS PARA TU LOGICA
+  
   bool _estaProcesando = false; // El semáforo para evitar el 3er click
   Timer? _timer;
   int _segundosTranscurridos = 0;
@@ -58,12 +59,11 @@ class _MemoriaState extends State<Memoria> {
   Future<void> _cargarBestScore() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      // Si no hay record, ponemos 999 o 0 según prefieras
       bestScore = prefs.getInt('best_score') ?? 0;
     });
   }
 
-  // Guardar si superó el récord (Menos intentos es mejor)
+  // Guardar si superó el récord 
   Future<void> _guardarRecord() async {
     final prefs = await SharedPreferences.getInstance();
     // Si el record es 0 (primera vez) o si hizo menos intentos que el record actual
@@ -80,7 +80,57 @@ class _MemoriaState extends State<Memoria> {
     _timer?.cancel();
     super.dispose();
   }
+  void _mostrarVictoria() {
+    // 1. Calculamos el puntaje final (Misma fórmula que al guardar)
+    int puntajeFinal = 100000 - (_segundosTranscurridos * 100) - (score * 500);
+    if (puntajeFinal < 0) puntajeFinal = 0;
 
+    showDialog(
+      context: context,
+      barrierDismissible: false, // El usuario NO puede cerrar esto tocando afuera
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("¡Felicidades!", textAlign: TextAlign.center),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.emoji_events, size: 60, color: Colors.amber),
+              const SizedBox(height: 20),
+              Text("Tiempo total: $_segundosTranscurridos seg"),
+              Text("Intentos totales: $score"),
+              const Divider(thickness: 2),
+              const Text("Puntuación Final:", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text("$puntajeFinal pts", style: const TextStyle(fontSize: 25, color: Colors.deepOrange, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          actions: [
+            // Botón: Ir al Menú Principal
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Cierra el diálogo
+                Navigator.pop(context); // Cierra el juego y vuelve al Menú
+              },
+              child: const Text("Menú Principal"),
+            ),
+            // Botón: Ver Récords (Pantalla de tu compañero)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange),
+              onPressed: () {
+                Navigator.pop(context); // Cierra el diálogo
+                Navigator.pop(context); // Cierra el juego actual
+                // Vamos a la pantalla de Puntuaciones
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => const Puntuaciones())
+                );
+              },
+              child: const Text("Ver Récords", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,11 +153,12 @@ class _MemoriaState extends State<Memoria> {
                   // Si no tienes las imagenes aún, usa iconos
                   // final imagen = 'imgs/icon$id.png'; 
                   
+                  final imagen = 'imgs/icon$id.png';
                   final isVisible = visible[index] || matched[index];
                   
                   return Carta(
                     id: id,
-                    // img: imagen, // Descomentar cuando tengas imagenes
+                    img: imagen,
                     visible: isVisible,
                     presionar: () => _cartaPresionada(index),
                   );
@@ -199,7 +250,10 @@ class _MemoriaState extends State<Memoria> {
         // Verificar si ganó (todos matched)
         if (matched.every((element) => element == true)) {
           _timer?.cancel();
-          _guardarRecord();
+          _guardarRecord().then((_) {
+             // 2. Una vez guardado, mostramos la victoria
+             _mostrarVictoria();
+          });
           // Aquí podrías mostrar un dialogo de victoria
         }
         
