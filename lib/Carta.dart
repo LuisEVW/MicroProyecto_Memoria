@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 class Carta extends StatelessWidget {
   final int id;
-  // final String img; // Descomentar si usas imagenes
   final bool visible;
   final VoidCallback presionar;
 
@@ -16,7 +15,7 @@ class Carta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector( // Usamos GestureDetector o InkWell para mejor control
+    return GestureDetector( 
       onTap: presionar,
       child: Container(
         decoration: BoxDecoration(
@@ -25,13 +24,10 @@ class Carta extends StatelessWidget {
           border: Border.all(color: Colors.black12),
           boxShadow: [BoxShadow(blurRadius: 2, color: Colors.black26)]
         ),
-        child: Center(
+          child: Center(
           child: visible
-            ? Text("$id", style: const TextStyle(fontSize: 30, color: Colors.white, fontWeight: FontWeight.bold))
-            // Si tienes imagen, borra el Text de arriba y pon: Image.asset(img)
-            
+            ? Image.asset('imgs/icon$id.png')
             : const Icon(Icons.question_mark, size: 40, color: Colors.white54), 
-            // Esto es lo que se ve cuando está boca abajo
         ),
       ),
     );

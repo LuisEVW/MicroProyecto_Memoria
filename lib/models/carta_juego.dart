@@ -1,8 +1,8 @@
 class GameCard {
-  final int id;             // Identificador único para saber cuál carta específica es
-  final String caminoImagen;   // La imagen que mostrará (ej: 'assets/leon.png')
-  bool isFlipped;           // ¿Está volteada boca arriba?
-  bool isMatched;           // ¿Ya encontraron su pareja?
+  final int id;
+  final String caminoImagen;
+  bool isFlipped;
+  bool isMatched;
 
   GameCard({
     required this.id,
