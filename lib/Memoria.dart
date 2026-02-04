@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:microproyecto/PantallaPrincipal.dart';
+import 'package:microproyecto/Puntuaciones.dart';
 import 'package:microproyecto/Carta.dart';
 
 class Memoria extends StatefulWidget {
+  // Generar pares de cartas
   final List<int> cartas = List<int>.generate(36, (i) => (i % 18) + 1);
   Memoria({super.key});
 
@@ -17,10 +19,11 @@ class _MemoriaState extends State<Memoria> {
   late List<bool> visible;
   late List<bool> matched;
   List<int> seleccionados = [];
-
-  int score = 0;
-  int bestScore = 0;
-  bool _estaProcesando = false;
+  
+  int score = 0;       // Intentos realizados
+  int bestScore = 0;   // Mejor puntuación guardada (menos intentos es mejor)
+  int bestPoints = 0;  // Mejor puntaje final (más es mejor)
+  bool _estaProcesando = false; 
   Timer? _timer;
   int _segundosTranscurridos = 0;
 
@@ -55,15 +58,29 @@ class _MemoriaState extends State<Memoria> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       bestScore = prefs.getInt('best_score') ?? 0;
+      bestPoints = prefs.getInt('best_points') ?? 0;
     });
   }
 
+  // Guardar si superó el récord 
   Future<void> _guardarRecord() async {
     final prefs = await SharedPreferences.getInstance();
+
     if (bestScore == 0 || score < bestScore) {
       await prefs.setInt('best_score', score);
       setState(() {
         bestScore = score;
+      });
+    }
+
+    // Calcular puntaje final con la misma fórmula que muestra el diálogo
+    int puntajeFinal = 100000 - (_segundosTranscurridos * 100) - (score * 500);
+    if (puntajeFinal < 0) puntajeFinal = 0;
+
+    if (bestPoints == 0 || puntajeFinal > bestPoints) {
+      await prefs.setInt('best_points', puntajeFinal);
+      setState(() {
+        bestPoints = puntajeFinal;
       });
     }
   }
@@ -73,7 +90,57 @@ class _MemoriaState extends State<Memoria> {
     _timer?.cancel();
     super.dispose();
   }
+  void _mostrarVictoria() {
+    // 1. Calculamos el puntaje final (Misma fórmula que al guardar)
+    int puntajeFinal = 100000 - (_segundosTranscurridos * 100) - (score * 500);
+    if (puntajeFinal < 0) puntajeFinal = 0;
 
+    showDialog(
+      context: context,
+      barrierDismissible: false, // El usuario NO puede cerrar esto tocando afuera
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("¡Felicidades!", textAlign: TextAlign.center),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.emoji_events, size: 60, color: Colors.amber),
+              const SizedBox(height: 20),
+              Text("Tiempo total: $_segundosTranscurridos seg"),
+              Text("Intentos totales: $score"),
+              const Divider(thickness: 2),
+              const Text("Puntuación Final:", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text("$puntajeFinal pts", style: const TextStyle(fontSize: 25, color: Colors.deepOrange, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          actions: [
+            // Botón: Ir al Menú Principal
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Cierra el diálogo
+                Navigator.pop(context); // Cierra el juego y vuelve al Menú
+              },
+              child: const Text("Menú Principal"),
+            ),
+            // Botón: Ver Récords 
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange),
+              onPressed: () {
+                Navigator.pop(context); // Cierra el diálogo
+                Navigator.pop(context); // Cierra el juego actual
+                // Vamos a la pantalla de Puntuaciones
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => const Puntuaciones())
+                );
+              },
+              child: const Text("Ver Récords", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,11 +159,13 @@ class _MemoriaState extends State<Memoria> {
                 ),
                 itemBuilder: (context, index) {
                   final id = cartas[index];
-
+                  
+                  final imagen = 'imgs/icon$id.png';
                   final isVisible = visible[index] || matched[index];
 
                   return Carta(
                     id: id,
+                    img: imagen,
                     visible: isVisible,
                     presionar: () => _cartaPresionada(index),
                   );
@@ -198,7 +267,11 @@ class _MemoriaState extends State<Memoria> {
 
         if (matched.every((element) => element == true)) {
           _timer?.cancel();
-          _guardarRecord();
+          _guardarRecord().then((_) {
+             // 2. Una vez guardado, mostramos la victoria
+             _mostrarVictoria();
+          });
+          // Aquí podrías mostrar un dialogo de victoria
         }
       } else {
         _estaProcesando = true;
