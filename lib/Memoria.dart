@@ -19,11 +19,11 @@ class _MemoriaState extends State<Memoria> {
   late List<bool> visible;
   late List<bool> matched;
   List<int> seleccionados = [];
-  
-  int score = 0;       // Intentos realizados
-  int bestScore = 0;   // Mejor puntuación guardada (menos intentos es mejor)
-  int bestPoints = 0;  // Mejor puntaje final (más es mejor)
-  bool _estaProcesando = false; 
+
+  int score = 0; // Intentos realizados
+  int bestScore = 0; // Mejor puntuación guardada (menos intentos es mejor)
+  int bestPoints = 0; // Mejor puntaje final (más es mejor)
+  bool _estaProcesando = false;
   Timer? _timer;
   int _segundosTranscurridos = 0;
 
@@ -62,7 +62,7 @@ class _MemoriaState extends State<Memoria> {
     });
   }
 
-  // Guardar si superó el récord 
+  // Guardar si superó el récord
   Future<void> _guardarRecord() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -74,7 +74,7 @@ class _MemoriaState extends State<Memoria> {
     }
 
     // Calcular puntaje final con la misma fórmula que muestra el diálogo
-    int puntajeFinal = 100000 - (_segundosTranscurridos * 100) - (score * 500);
+    int puntajeFinal = 100000 - (_segundosTranscurridos * 50) - (score * 500);
     if (puntajeFinal < 0) puntajeFinal = 0;
 
     if (bestPoints == 0 || puntajeFinal > bestPoints) {
@@ -90,6 +90,7 @@ class _MemoriaState extends State<Memoria> {
     _timer?.cancel();
     super.dispose();
   }
+
   void _mostrarVictoria() {
     // 1. Calculamos el puntaje final (Misma fórmula que al guardar)
     int puntajeFinal = 100000 - (_segundosTranscurridos * 100) - (score * 500);
@@ -97,7 +98,8 @@ class _MemoriaState extends State<Memoria> {
 
     showDialog(
       context: context,
-      barrierDismissible: false, // El usuario NO puede cerrar esto tocando afuera
+      barrierDismissible:
+          false, // El usuario NO puede cerrar esto tocando afuera
       builder: (context) {
         return AlertDialog(
           title: const Text("¡Felicidades!", textAlign: TextAlign.center),
@@ -109,8 +111,18 @@ class _MemoriaState extends State<Memoria> {
               Text("Tiempo total: $_segundosTranscurridos seg"),
               Text("Intentos totales: $score"),
               const Divider(thickness: 2),
-              const Text("Puntuación Final:", style: TextStyle(fontWeight: FontWeight.bold)),
-              Text("$puntajeFinal pts", style: const TextStyle(fontSize: 25, color: Colors.deepOrange, fontWeight: FontWeight.bold)),
+              const Text(
+                "Puntuación Final:",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                "$puntajeFinal pts",
+                style: const TextStyle(
+                  fontSize: 25,
+                  color: Colors.deepOrange,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           actions: [
@@ -122,25 +134,31 @@ class _MemoriaState extends State<Memoria> {
               },
               child: const Text("Menú Principal"),
             ),
-            // Botón: Ver Récords 
+            // Botón: Ver Récords
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepOrange,
+              ),
               onPressed: () {
                 Navigator.pop(context); // Cierra el diálogo
                 Navigator.pop(context); // Cierra el juego actual
                 // Vamos a la pantalla de Puntuaciones
                 Navigator.push(
-                  context, 
-                  MaterialPageRoute(builder: (context) => const Puntuaciones())
+                  context,
+                  MaterialPageRoute(builder: (context) => const Puntuaciones()),
                 );
               },
-              child: const Text("Ver Récords", style: TextStyle(color: Colors.white)),
+              child: const Text(
+                "Ver Récords",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -150,24 +168,32 @@ class _MemoriaState extends State<Memoria> {
             flex: 3,
             child: Padding(
               padding: const EdgeInsets.all(20.0),
-              child: GridView.builder(
-                itemCount: cartas.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 6,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                ),
-                itemBuilder: (context, index) {
-                  final id = cartas[index];
-                  
-                  final imagen = 'imgs/icon$id.png';
-                  final isVisible = visible[index] || matched[index];
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Para arreglar el tamaño de las cartas en base al tamaño de la ventana
+                  double ancho = (constraints.maxWidth / 6);
+                  double alto = (constraints.maxHeight / 6);
+                  return GridView.builder(
+                    itemCount: cartas.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 6,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: (ancho / alto)*1.10,
+                    ),
+                    itemBuilder: (context, index) {
+                      final id = cartas[index];
 
-                  return Carta(
-                    id: id,
-                    img: imagen,
-                    visible: isVisible,
-                    presionar: () => _cartaPresionada(index),
+                      final imagen = 'imgs/icon$id.png';
+                      final isVisible = visible[index] || matched[index];
+
+                      return Carta(
+                        id: id,
+                        img: imagen,
+                        visible: isVisible,
+                        presionar: () => _cartaPresionada(index),
+                      );
+                    },
                   );
                 },
               ),
@@ -268,8 +294,8 @@ class _MemoriaState extends State<Memoria> {
         if (matched.every((element) => element == true)) {
           _timer?.cancel();
           _guardarRecord().then((_) {
-             // 2. Una vez guardado, mostramos la victoria
-             _mostrarVictoria();
+            // 2. Una vez guardado, mostramos la victoria
+            _mostrarVictoria();
           });
           // Aquí podrías mostrar un dialogo de victoria
         }
