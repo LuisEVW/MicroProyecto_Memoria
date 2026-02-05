@@ -40,7 +40,7 @@ Un juego de memoria clásico (Memorama) desarrollado con Flutter. El objetivo es
 ## 👥 Autores
 
 * **Christian Sánchez**
-* **Luis Violoria**
+* **Luis Viloria**
 
 ---
 _Proyecto realizado para la asignatura de Sistemas de Información._
