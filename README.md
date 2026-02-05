@@ -34,6 +34,7 @@ Un juego de memoria clásico (Memorama) desarrollado con Flutter. El objetivo es
 
 | Escritorio |
 |:---:|
+<img width="1920" height="956" alt="juego" src="https://github.com/user-attachments/assets/dd33937c-6d4b-4db4-bf0c-b70e8abfe5d2" />
 
 
 ## 👥 Autores
