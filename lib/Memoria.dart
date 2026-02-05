@@ -74,7 +74,7 @@ class _MemoriaState extends State<Memoria> {
     }
 
     // Calcular puntaje final con la misma fórmula que muestra el diálogo
-    int puntajeFinal = 100000 - (_segundosTranscurridos * 50) - (score * 500);
+    int puntajeFinal = 100000 - (_segundosTranscurridos * 100) - (score * 500);
     if (puntajeFinal < 0) puntajeFinal = 0;
 
     if (bestPoints == 0 || puntajeFinal > bestPoints) {
