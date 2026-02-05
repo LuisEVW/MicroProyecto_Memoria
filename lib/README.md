@@ -33,8 +33,8 @@ Un juego de memoria clásico (Memorama) desarrollado con Flutter. El objetivo es
 ## 📸 Capturas de Pantalla
 
 | Escritorio |
-|:---:|:---:|
-| <img src="imagen_app/juego.png" width="400"> |
+|:---:|
+
 
 ## 👥 Autores
 
